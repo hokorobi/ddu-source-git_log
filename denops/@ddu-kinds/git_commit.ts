@@ -98,6 +98,49 @@ export const GitLogActions: Actions<Params> = {
     return ActionFlags.None;
   },
 
+  switchDetach: async ({ items, denops }) => {
+    const action = await ensureOnlyOneCommitAction(denops, items);
+    if (!action) {
+      return ActionFlags.Persist;
+    }
+    const hash = getHash({}, action);
+    await echoallCommand(denops, "git", {
+      args: ["switch", "--detach", hash],
+      cwd: action.cwd,
+    });
+    return ActionFlags.None;
+  },
+
+  fixup: async ({ items, denops }) => {
+    const action = await ensureOnlyOneCommitAction(denops, items);
+    if (!action) {
+      return ActionFlags.Persist;
+    }
+    const hash = getHash({}, action);
+    await echoallCommand(denops, "git", {
+      args: ["commit", "--fixup", hash],
+      cwd: action.cwd,
+    });
+    await echoallCommand(denops, "git", {
+      args: ["rebase", "--interactive", "--autosquash", hash + "~"],
+      cwd: action.cwd,
+    });
+    return ActionFlags.None;
+  },
+
+  revert: async ({ items, denops }) => {
+    const action = await ensureOnlyOneCommitAction(denops, items);
+    if (!action) {
+      return ActionFlags.Persist;
+    }
+    const hash = getHash({}, action);
+    await echoallCommand(denops, "git", {
+      args: ["revert", "--mainline", "1", "--edit", hash],
+      cwd: action.cwd,
+    });
+    return ActionFlags.None;
+  },
+
   cherryPick: async ({ items, denops }) => {
     const action = await ensureOnlyOneCommitAction(denops, items);
     if (!action) {
